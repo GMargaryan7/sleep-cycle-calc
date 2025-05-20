@@ -1,3 +1,51 @@
+// Add these to the beginning of your script.js file
+function formatToTimeInput(date) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+function formatTimeForDisplay(date) {
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    return `${hours}:${minutes} ${ampm}`;
+}
+
+function getRecommendation(cycleNumber) {
+    if (cycleNumber <= 3) {
+        return {
+            level: 'short',
+            text: 'Short',
+            className: 'result-item--short',
+            badgeClass: 'badge--short'
+        };
+    } else if (cycleNumber === 4) {
+        return {
+            level: 'fair',
+            text: 'Fair',
+            className: 'result-item--fair',
+            badgeClass: 'badge--fair'
+        };
+    } else if (cycleNumber === 5 || cycleNumber === 6) {
+        return {
+            level: 'optimal',
+            text: 'Optimal',
+            className: 'result-item--optimal',
+            badgeClass: 'badge--optimal'
+        };
+    } else {
+        return {
+            level: 'extended',
+            text: 'Extended',
+            className: 'result-item--extended',
+            badgeClass: 'badge--extended'
+        };
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
             // --- THEME TOGGLE LOGIC ---
             const themeToggle = document.getElementById('themeToggle');
