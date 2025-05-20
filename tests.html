@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Cycle Optimizer - Unit Tests</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 20px;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        #testResults h2 {
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+        #testResults h3 {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        #testResults p {
+            margin: 5px 0 5px 20px;
+            padding: 5px;
+            border-left: 3px solid;
+        }
+        .passed {
+            color: green;
+            border-left-color: green;
+        }
+        .failed {
+            color: red;
+            border-left-color: red;
+        }
+        .summary-passed { color: green; font-weight: bold; }
+        .summary-failed { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Sleep Cycle Optimizer - Unit Tests</h1>
+    <div id="testResults"></div>
+
+    <script src="script.js"></script> 
+    <script>
+        const testResultsContainer = document.getElementById('testResults');
+        let testsPassed = 0;
+        let testsFailed = 0;
+
+        function describe(description, fn) {
+            const descElement = document.createElement('h3');
+            descElement.textContent = description;
+            testResultsContainer.appendChild(descElement);
+            fn();
+        }
+
+        function it(description, fn) {
+            const resultElement = document.createElement('p');
+            
+            try {
+                fn();
+                resultElement.textContent = `IT: ${description} ... ✅ PASSED`;
+                resultElement.classList.add('passed');
+                testsPassed++;
+            } catch (e) {
+                resultElement.textContent = `IT: ${description} ... ❌ FAILED: ${e.message}`;
+                resultElement.classList.add('failed');
+                console.error(`Test failed: ${description}`, e);
+                testsFailed++;
+            }
+            testResultsContainer.appendChild(resultElement);
+        }
+
+        function assertEquals(actual, expected, message = 'Assertion failed') {
+            if (actual !== expected) {
+                throw new Error(`${message} - Expected: "${expected}", Actual: "${actual}"`);
+            }
+        }
+        function assertDeepEquals(actual, expected, message = 'Deep assertion failed') {
+            if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+                throw new Error(`${message} - Expected: ${JSON.stringify(expected)}, Actual: ${JSON.stringify(actual)}`);
+            }
+        }
+        
+        function summarizeTests() {
+            const summaryElement = document.createElement('h2');
+            let summaryText = `Test Summary: <span class="summary-passed">${testsPassed} Passed</span>, <span class="summary-failed">${testsFailed} Failed</span>.`;
+            
+            summaryElement.innerHTML = summaryText;
+            if (testsFailed > 0) summaryElement.style.color = 'red';
+            else summaryElement.style.color = 'green';
+            testResultsContainer.insertBefore(summaryElement, testResultsContainer.firstChild);
+        }
+
+        // --- Test Cases ---
+
+        describe('formatToTimeInput', () => {
+            it('should format a Date object to HH:MM string for morning', () => {
+                const date = new Date(2023, 0, 1, 8, 5); // 08:05
+                assertEquals(formatToTimeInput(date), '08:05');
+            });
+            it('should format a Date object to HH:MM string for evening', () => {
+                const date2 = new Date(2023, 0, 1, 23, 59); // 23:59
+                assertEquals(formatToTimeInput(date2), '23:59');
+            });
+            it('should format a Date object to HH:MM string for midnight', () => {
+                const date3 = new Date(2023, 0, 1, 0, 0); // 00:00
+                assertEquals(formatToTimeInput(date3), '00:00');
+            });
+        });
+
+        describe('formatTimeForDisplay', () => {
+            it('should format a Date object to a user-friendly AM/PM time string (8:05 AM)', () => {
+                let date = new Date(2023, 0, 1, 8, 5); 
+                assertEquals(formatTimeForDisplay(date), '8:05 AM');
+            });
+            it('should format a Date object to a user-friendly AM/PM time string (1:30 PM)', () => {
+                let date = new Date(2023, 0, 1, 13, 30); 
+                assertEquals(formatTimeForDisplay(date), '1:30 PM');
+            });
+            it('should format a Date object to a user-friendly AM/PM time string (12:15 AM)', () => {
+                let date = new Date(2023, 0, 1, 0, 15); 
+                assertEquals(formatTimeForDisplay(date), '12:15 AM');
+            });
+            it('should format a Date object to a user-friendly AM/PM time string (12:00 PM)', () => {
+                let date = new Date(2023, 0, 1, 12, 0); 
+                assertEquals(formatTimeForDisplay(date), '12:00 PM');
+            });
+        });
+
+        describe('getRecommendation', () => {
+            it('should return "short" for 1 cycle', () => {
+                assertDeepEquals(getRecommendation(1).level, 'short');
+            });
+            it('should return "short" for 3 cycles', () => {
+                assertDeepEquals(getRecommendation(3).level, 'short');
+            });
+            it('should return "fair" for 4 cycles', () => {
+                assertDeepEquals(getRecommendation(4).level, 'fair');
+            });
+            it('should return "optimal" for 5 cycles', () => {
+                assertDeepEquals(getRecommendation(5).level, 'optimal');
+            });
+            it('should return "optimal" for 6 cycles', () => {
+                assertDeepEquals(getRecommendation(6).level, 'optimal');
+            });
+            it('should return "extended" for 7 cycles', () => {
+                assertDeepEquals(getRecommendation(7).level, 'extended');
+            });
+             it('should return complete object for "optimal" (e.g., 5 cycles)', () => {
+                const expected = { level: 'optimal', text: 'Optimal', className: 'result-item--optimal', badgeClass: 'badge--optimal' };
+                assertDeepEquals(getRecommendation(5), expected);
+            });
+        });
+
+        // describe('Sleep Cycle Calculations (Conceptual - DOM dependent functions not directly tested here)', () => {
+        //     // These constants would be needed if testing these functions directly
+        //     // const CYCLE_DURATION_MINUTES = 90;
+        //     // const FALL_ASLEEP_OFFSET_MINUTES = 15;
+        //
+        //     it('should correctly calculate wake-up time for 1 cycle (90 mins) from a base time WITHOUT offset', () => {
+        //         const baseTime = new Date(2023, 0, 1, 22, 0); // 10:00 PM
+        //         const expectedWakeUp = new Date(baseTime.getTime());
+        //         expectedWakeUp.setMinutes(expectedWakeUp.getMinutes() + 90);
+        //         
+        //         // This is a conceptual test. To run it, generateWakeUpSuggestions would need to be refactored
+        //         // to separate its core calculation logic from DOM interaction, or we mock DOM elements.
+        //         // For now, we simulate the core logic:
+        //         let simulatedSleepTime = new Date(baseTime.getTime());
+        //         let simulatedWakeUpTime = new Date(simulatedSleepTime.getTime());
+        //         simulatedWakeUpTime.setMinutes(simulatedWakeUpTime.getMinutes() + 90); // 1 cycle
+        //
+        //         assertEquals(simulatedWakeUpTime.toISOString(), expectedWakeUp.toISOString());
+        //     });
+        //
+        //     it('should correctly calculate wake-up time for 1 cycle (90 mins) + 15min offset from a base time', () => {
+        //         const baseTime = new Date(2023, 0, 1, 22, 0); // 10:00 PM
+        //         const expectedWakeUp = new Date(baseTime.getTime());
+        //         expectedWakeUp.setMinutes(expectedWakeUp.getMinutes() + 15 + 90); // offset + 1 cycle
+        //
+        //         // Conceptual
+        //         let simulatedSleepTime = new Date(baseTime.getTime());
+        //         simulatedSleepTime.setMinutes(simulatedSleepTime.getMinutes() + 15); // Apply offset
+        //         let simulatedWakeUpTime = new Date(simulatedSleepTime.getTime());
+        //         simulatedWakeUpTime.setMinutes(simulatedWakeUpTime.getMinutes() + 90); // 1 cycle
+        //
+        //         assertEquals(simulatedWakeUpTime.toISOString(), expectedWakeUp.toISOString());
+        //     });
+        //
+        //     it('should correctly calculate bedtime for 5 cycles (450 mins) from a wake-up target WITHOUT offset', () => {
+        //         const wakeUpTarget = new Date(2023, 0, 2, 7, 0); // 7:00 AM next day
+        //         const expectedBedtime = new Date(wakeUpTarget.getTime());
+        //         expectedBedtime.setMinutes(expectedBedtime.getMinutes() - (5 * 90));
+        //
+        //         // Conceptual
+        //         let simulatedTargetTime = new Date(wakeUpTarget.getTime());
+        //         let simulatedBedTime = new Date(simulatedTargetTime.getTime());
+        //         simulatedBedTime.setMinutes(simulatedBedTime.getMinutes() - (5 * 90));
+        //
+        //         assertEquals(simulatedBedTime.toISOString(), expectedBedtime.toISOString());
+        //     });
+        //
+        //      it('should correctly calculate bedtime for 5 cycles (450 mins) + 15min offset from a wake-up target', () => {
+        //         const wakeUpTarget = new Date(2023, 0, 2, 7, 0); // 7:00 AM next day
+        //         const expectedBedtime = new Date(wakeUpTarget.getTime());
+        //         expectedBedtime.setMinutes(expectedBedtime.getMinutes() - (5 * 90) - 15); // 5 cycles then subtract offset
+        //
+        //         // Conceptual
+        //         let simulatedTargetTime = new Date(wakeUpTarget.getTime());
+        //         let simulatedBedTime = new Date(simulatedTargetTime.getTime());
+        //         simulatedBedTime.setMinutes(simulatedBedTime.getMinutes() - (5 * 90) - 15);
+        //
+        //         assertEquals(simulatedBedTime.toISOString(), expectedBedtime.toISOString());
+        //     });
+        // });
+
+        summarizeTests();
+    </script>
+</body>
+</html>
